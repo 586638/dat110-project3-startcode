@@ -26,22 +26,27 @@ public class ChordLookup {
 	}
 	
 	public NodeInterface findSuccessor(BigInteger key) throws RemoteException {
-		
+
+
 		// ask this node to find the successor of key
-		
+
 		// get the successor of the node
-		
+		NodeInterface succ = node.getSuccessor();
 		// get the stub for this successor (Util.getProcessStub())
-		
+		succ = Util.getProcessStub(succ.getNodeName(), succ.getPort());
+
 		// check that key is a member of the set {nodeid+1,...,succID} i.e. (nodeid+1 <= key <= succID) using the ComputeLogic
-		
-		// if logic returns true, then return the successor
-		
-		// if logic returns false; call findHighestPredecessor(key)
-		
-		// do return highest_pred.findSuccessor(key) - This is a recursive call until logic returns true
-				
-		return null;					
+		if(Util.computeLogic(key, node.getNodeID().add(new BigInteger("1")), succ.getNodeID())) {
+			// if logic returns true, then return the successor
+			return succ;
+		}else {
+			// if logic returns false; call findHighestPredecessor(key)
+			NodeInterface highest_pred = findHighestPredecessor(key);
+
+			// do return highest_pred.findSuccessor(key) - This is a recursive call until logic returns true
+			return highest_pred.findSuccessor(key);
+
+		}
 	}
 	
 	/**
@@ -53,9 +58,16 @@ public class ChordLookup {
 	private NodeInterface findHighestPredecessor(BigInteger key) throws RemoteException {
 		
 		// collect the entries in the finger table for this node
+		List<NodeInterface> fingers = node.getFingerTable();
 		
 		// starting from the last entry, iterate over the finger table
-		
+		for (int i = fingers.size()-1; i >= 0; i--) {
+			NodeInterface stub = fingers.get(i);
+			stub = Util.getProcessStub(stub.getNodeName(), stub.getPort());
+
+			if (Util.computeLogic(stub.getNodeID(), node.getNodeID().add(new BigInteger("1")), key.subtract(new BigInteger("1"))))
+				return stub;
+		}
 		// for each finger, obtain a stub from the registry
 		
 		// check that finger is a member of the set {nodeID+1,...,ID-1} i.e. (nodeID+1 <= finger <= key-1) using the ComputeLogic
